@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookSleeve
@@ -49,6 +51,22 @@ namespace BookSleeve
         /// <remarks>Warning: consider KEYS as a command that should only be used in production environments with extreme care. It may ruin performance when it is executed against large databases. This command is intended for debugging and special operations, such as changing your keyspace layout. Don't use KEYS in your regular application code. If you're looking for a way to find keys in a subset of your keyspace, consider using sets.</remarks>
         /// <remarks>http://redis.io/commands/keys</remarks>
         Task<string[]> Find(int db, string pattern, bool queueJump = false);
+
+        /// <summary>
+        /// Sorts items in set
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>http://redis.io/commands/sort</remarks>
+        Task<string[]> Sort(int db,
+                            string key,
+                            string byPattern = "",
+                            string[] getPattern = null,
+                            int? limitOffset = null,
+                            int? limitCount = null,
+                            bool alpha = false,
+                            bool descending = false,
+                            string store = null,
+                            bool queueJump = false);
         /// <summary>
         /// Move key from the currently selected database (see SELECT) to the specified destination database. When key already exists in the destination database, or it does not exist in the source database, it does nothing. It is possible to use MOVE as a locking primitive because of this.
         /// </summary>
@@ -177,6 +195,54 @@ namespace BookSleeve
         {
             
             return ExecuteMultiString(RedisMessage.Create(db, RedisLiteral.KEYS, pattern), queueJump);
+        }
+
+        public Task<string[]> Sort(int db, 
+            string key,
+            string byPattern = "",
+            string[] getPattern = null, 
+            int? limitOffset = null,
+            int? limitCount = null,
+            bool alpha = false,
+            bool descending = false,
+            string store = null,
+            bool queueJump = false)
+        {
+            var items = new LinkedList<string>();
+            items.AddLast(key);
+
+            if (!string.IsNullOrEmpty(byPattern))
+            {
+                items.AddLast("BY");
+                items.AddLast(byPattern);
+            }
+
+            if (limitOffset.HasValue || limitCount.HasValue)
+            {
+                items.AddLast("LIMIT");
+                items.AddLast(limitOffset.GetValueOrDefault(0).ToString());
+                items.AddLast(limitCount.GetValueOrDefault(int.MaxValue).ToString());
+            }
+
+            if (getPattern != null)
+            {
+                foreach (var pattern in getPattern)
+                {
+                    items.AddLast("GET");
+                    items.AddLast(pattern);
+                }
+            }
+
+            if (descending) items.AddLast("DESC");
+            if (alpha) items.AddLast("ALPHA");
+
+            if (!string.IsNullOrEmpty(store))
+            {
+                items.AddLast("STORE");
+                items.AddLast(store);
+            }
+
+            return ExecuteMultiString(RedisMessage.Create(db, RedisLiteral.SORT, items.ToArray()), queueJump);
         }
 
         /// <summary>

@@ -406,6 +406,93 @@ namespace Tests
                 Assert.Contains("abd", arr);
             }
         }
+        [Test]
+        public void TestSortAscending()
+        {
+            using (var conn = Config.GetUnsecuredConnection(allowAdmin: true))
+            {
+                const int testDb = 10;
+                conn.Server.FlushDb(testDb);
+                conn.Sets.Add(testDb, "test", "item1");
+                conn.Sets.Add(testDb, "test", "item2");
+                conn.Sets.Add(testDb, "test", "item3");
+                conn.Hashes.Set(testDb, "item1", "sorter", "Sort1");
+                conn.Hashes.Set(testDb, "item2", "sorter", "Sort2");
+                conn.Hashes.Set(testDb, "item3", "sorter", "Sort3");
+                var arr = conn.Wait(conn.Keys.Sort(testDb, "test", byPattern: "*->sorter", alpha: true));
+                Assert.That(arr, Is.EquivalentTo(new string[]
+                                                     {
+                                                         "item1", "item2", "item3"
+                                                     }));
+            }
+        }
+        [Test]
+        public void TestSortDecending()
+        {
+            using (var conn = Config.GetUnsecuredConnection(allowAdmin: true))
+            {
+                const int testDb = 10;
+                conn.Server.FlushDb(testDb);
+                conn.Sets.Add(testDb, "test", "item1");
+                conn.Sets.Add(testDb, "test", "item2");
+                conn.Sets.Add(testDb, "test", "item3");
+                conn.Hashes.Set(testDb, "item1", "sorter", "Sort1");
+                conn.Hashes.Set(testDb, "item2", "sorter", "Sort2");
+                conn.Hashes.Set(testDb, "item3", "sorter", "Sort3");
+                var arr = conn.Wait(conn.Keys.Sort(testDb, "test", byPattern: "*->sorter", alpha: true, descending: true));
+                Assert.That(arr, Is.EquivalentTo(new string[]
+                                                     {
+                                                         "item3", "item2", "item1"
+                                                     }));
+            }
+        }
+        [Test]
+        public void TestSortWithGet()
+        {
+            using (var conn = Config.GetUnsecuredConnection(allowAdmin: true))
+            {
+                const int testDb = 10;
+                conn.Server.FlushDb(testDb);
+                conn.Sets.Add(testDb, "test", "item1");
+                conn.Sets.Add(testDb, "test", "item2");
+                conn.Sets.Add(testDb, "test", "item3");
+                conn.Hashes.Set(testDb, "item1", "sorter", "Sort1");
+                conn.Hashes.Set(testDb, "item2", "sorter", "Sort2");
+                conn.Hashes.Set(testDb, "item3", "sorter", "Sort3");
+                var arr = conn.Wait(conn.Keys.Sort(testDb, "test", byPattern: "*->sorter", getPattern:new[]{"*->sorter"}, alpha:true));
+                Assert.That(arr, Is.EquivalentTo(new string[]
+                                                     {
+                                                         "Sort1", "Sort2", "Sort3"
+                                                     }));
+            }
+        }
+        [Test]
+        public void TestSortAndStore()
+        {
+            using (var conn = Config.GetUnsecuredConnection(allowAdmin: true))
+            {
+                const int testDb = 10;
+                conn.Server.FlushDb(testDb);
+                conn.Sets.Add(testDb, "test", "item1");
+                conn.Sets.Add(testDb, "test", "item2");
+                conn.Sets.Add(testDb, "test", "item3");
+                conn.Hashes.Set(testDb, "item1", "sorter", "Sort1");
+                conn.Hashes.Set(testDb, "item2", "sorter", "Sort2");
+                conn.Hashes.Set(testDb, "item3", "sorter", "Sort3");
+                conn.Keys
+                    .Sort(
+                        testDb, "test",
+                        byPattern: "*->sorter",
+                        getPattern: new[] {"*->sorter"},
+                        alpha: true,
+                        store: "stored");
+                var arr = conn.Wait(conn.Lists.RangeString(testDb, "stored", 0, 3));
+                Assert.That(arr, Is.EquivalentTo(new string[]
+                                                     {
+                                                         "Sort1", "Sort2", "Sort3"
+                                                     }));
+            }
+        }
 
         [Test]
         public void TestDBSize()
