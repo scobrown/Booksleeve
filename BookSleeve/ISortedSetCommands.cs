@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -173,6 +174,10 @@ namespace BookSleeve
         /// <returns>the number of elements removed.</returns>
         /// <remarks>Since version 2.1.6, min and max can be exclusive, following the syntax of ZRANGEBYSCORE.</remarks>
         Task<long> RemoveRange(int db, string key, double min, double max, bool minInclusive = true, bool maxInclusive = true, bool queueJump = false);
+
+
+        Task<long> ZIntersectAndStore(int db, string destination, string[] keys, bool queueJump = false);        
+        Task<long> ZUnionAndStore(int db, string destination, string[] keys, bool queueJump = false);
     }
 
     partial class RedisConnection : ISortedSetCommands
@@ -393,5 +398,16 @@ namespace BookSleeve
         {
             return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZREMRANGEBYSCORE, key, RedisMessage.RedisParameter.Range(min, minInclusive), RedisMessage.RedisParameter.Range(max, maxInclusive)), queueJump);
         }
+        Task<long> ISortedSetCommands.ZIntersectAndStore(int db, string destination, string[] keys, bool queueJump = false)
+        {
+            var destinationKeys = new string[] { keys.Length.ToString() }.Concat(keys).ToArray();
+            return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZINTERSTORE, destination, destinationKeys), queueJump);
+        }
+        Task<long> ISortedSetCommands.ZUnionAndStore(int db, string destination, string[] keys, bool queueJump = false)
+        {
+            var destinationKeys = new string[]{keys.Length.ToString()}.Concat(keys).ToArray();
+            return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZUNIONSTORE, destination, destinationKeys), queueJump);
+        }
+
     }
 }
