@@ -48,6 +48,17 @@ namespace BookSleeve
         public virtual bool IsCancellation { get { return false; } }
         public virtual double ValueDouble { get { return double.Parse(ValueString, CultureInfo.InvariantCulture); } }
 
+        public virtual double? ValueNullableDouble
+        {
+            get
+            {
+                double value;
+                if (!Double.TryParse(ValueString, out value))
+                    return null;
+                return value;
+            }
+        }
+
         private class Int64RedisResult : RedisResult
         {
             internal Int64RedisResult(long value) { this.value = value; }

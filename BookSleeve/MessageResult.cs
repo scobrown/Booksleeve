@@ -42,6 +42,10 @@ namespace BookSleeve
         }
         protected abstract T GetValue(RedisResult result);
     }
+    internal sealed class MessageResultNullableDouble : MessageResult<double?>
+    {
+        protected override double? GetValue(RedisResult result) { return result.ValueNullableDouble; }
+    }
     internal sealed class MessageResultDouble : MessageResult<double>
     {
         protected override double  GetValue(RedisResult result) { return result.ValueDouble; }
