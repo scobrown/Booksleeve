@@ -126,13 +126,13 @@ namespace BookSleeve
         /// </summary>
         /// <remarks>http://redis.io/commands/zscore</remarks>
         /// <returns>the score of member (a double precision floating point number), represented as string.</returns>
-        Task<double> Score(int db, string key, string member, bool queueJump = false);
+        Task<double?> Score(int db, string key, string member, bool queueJump = false);
         /// <summary>
         /// Returns the score of member in the sorted set at key. If member does not exist in the sorted set, or key does not exist, nil is returned.
         /// </summary>
         /// <remarks>http://redis.io/commands/zscore</remarks>
         /// <returns>the score of member (a double precision floating point number), represented as string.</returns>
-        Task<double> Score(int db, string key, byte[] member, bool queueJump = false);
+        Task<double?> Score(int db, string key, byte[] member, bool queueJump = false);
         /// <summary>
         /// Removes the specified members from the sorted set stored at key. Non existing members are ignored.
         /// An error is returned when key exists and does not hold a sorted set.
@@ -351,15 +351,15 @@ namespace BookSleeve
             
             return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZRANK, key, member), queueJump);
         }
-        Task<double> ISortedSetCommands.Score(int db, string key, string member, bool queueJump)
+        Task<double?> ISortedSetCommands.Score(int db, string key, string member, bool queueJump)
         {
             
-            return ExecuteDouble(RedisMessage.Create(db, RedisLiteral.ZSCORE, key, member), queueJump);
+            return ExecuteNullableDouble(RedisMessage.Create(db, RedisLiteral.ZSCORE, key, member), queueJump);
         }
-        Task<double> ISortedSetCommands.Score(int db, string key, byte[] member, bool queueJump)
+        Task<double?> ISortedSetCommands.Score(int db, string key, byte[] member, bool queueJump = false)
         {
-            
-            return ExecuteDouble(RedisMessage.Create(db, RedisLiteral.ZSCORE, key, member), queueJump);
+
+            return ExecuteNullableDouble(RedisMessage.Create(db, RedisLiteral.ZSCORE, key, member), queueJump);
         }
         Task<bool> ISortedSetCommands.Remove(int db, string key, string member, bool queueJump)
         {
