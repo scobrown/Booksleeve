@@ -20,6 +20,30 @@ namespace Tests
             }
         }
 
+        [Test]
+        public void Score() // http://code.google.com/p/booksleeve/issues/detail?id=23
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var score = conn.SortedSets.Score(3, "zset","abc");
+                Assert.AreEqual(value, conn.Wait(score));
+            }
+        }
+        [Test]
+        public void ScoreOnNonexistentValue_MustReturnNull() // http://code.google.com/p/booksleeve/issues/detail?id=23
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var score = conn.SortedSets.Score(3, "zset", "xyz");
+                Assert.AreEqual(null, conn.Wait(score));
+            }
+        }
+
 
         [Test]
         public void ZInterStore()
