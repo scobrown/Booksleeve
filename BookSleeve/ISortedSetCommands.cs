@@ -107,8 +107,10 @@ namespace BookSleeve
                                                    bool minInclusive = true, bool maxInclusive = true,
                                                    long offset = 0, long count = long.MaxValue, bool queueJump = false);
 
-        
-        Task<string[]> RangeStringWithoutScores(int db, string key, double min, double max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump);
+
+        Task<string[]> RangeStringWithoutScores(int db, string key, double min, double max, bool ascending = true,
+                                                bool minInclusive = true, bool maxInclusive = true, long offset = 0,
+                                                long count = long.MaxValue, bool queueJump = false);
 
         /// <summary>
         /// Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
