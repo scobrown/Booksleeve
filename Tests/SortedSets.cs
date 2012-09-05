@@ -151,5 +151,30 @@ namespace Tests
                 Assert.AreEqual(1.0, dict["OBJ2"]);
             }
         }
+        [Test]
+        public void ZUnionStoreWithWeights()
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                conn.Keys.Remove(3, new[] { "A", "B", "C" });
+
+                conn.SortedSets.Add(3, "A", "OBJ1", 1);
+                conn.SortedSets.Add(3, "B", "OBJ1", 2);
+                conn.SortedSets.Add(3, "B", "OBJ2", 1);
+
+                var unionAndStore = conn.SortedSets.ZUnionAndStore(3, "C", new[] { "A", "B" },new double[]{1,2});
+                Assert.AreEqual(2, conn.Wait(unionAndStore));
+
+                var range = conn.SortedSets.Range(3, "C", 0, 2);
+                var pairs = conn.Wait(range);
+                Assert.AreEqual(2, pairs.Length);
+
+                var dict = pairs.ToDictionary(x => Encoding.UTF8.GetString(x.Key), x => x.Value);
+                Assert.IsTrue(dict.ContainsKey("OBJ1"));
+                Assert.IsTrue(dict.ContainsKey("OBJ2"));
+                Assert.AreEqual(5.0, dict["OBJ1"]);
+                Assert.AreEqual(2.0, dict["OBJ2"]);
+            }
+        }
     }
 }

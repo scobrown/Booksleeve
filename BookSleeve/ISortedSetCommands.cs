@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -183,6 +184,8 @@ namespace BookSleeve
         Task<long> ZUnionAndStore(int db, string destination, string[] keys, bool queueJump = false);
         Task<byte[][]> RangeWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump);
         Task<Dictionary<string, double>> RangeString(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump);
+        Task<long> ZUnionAndStore(int db, string destination, string[] keys, double[] weights, bool queueJump = false);
+        Task<long> ZIntersectAndStore(int db, string destination, string[] keys, double[] weights, bool queueJump = false);
         Task<string[]> RangeStringWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump);
     }
 
@@ -449,10 +452,30 @@ namespace BookSleeve
             var destinationKeys = new string[] { keys.Length.ToString() }.Concat(keys).ToArray();
             return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZINTERSTORE, destination, destinationKeys), queueJump);
         }
+        Task<long> ISortedSetCommands.ZIntersectAndStore(int db, string destination, string[] keys,double[] weights, bool queueJump = false)
+        {
+            var destinationKeys = new string[] {keys.Length.ToString()}.Concat(keys).ToList();
+        if(weights.Length > 0)
+            {
+                destinationKeys.Add(RedisLiteral.WEIGHTS.ToString());
+                destinationKeys.AddRange(weights.Select(d=>d.ToString(CultureInfo.InvariantCulture)));
+            }
+            return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZINTERSTORE, destination, destinationKeys.ToArray()), queueJump);
+        }
         Task<long> ISortedSetCommands.ZUnionAndStore(int db, string destination, string[] keys, bool queueJump = false)
         {
             var destinationKeys = new string[]{keys.Length.ToString()}.Concat(keys).ToArray();
             return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZUNIONSTORE, destination, destinationKeys), queueJump);
+        }
+        Task<long> ISortedSetCommands.ZUnionAndStore(int db, string destination, string[] keys, double[] weights, bool queueJump = false)
+        {
+            var destinationKeys = new string[] {keys.Length.ToString()}.Concat(keys).ToList();
+            if(weights.Length > 0)
+            {
+                destinationKeys.Add(RedisLiteral.WEIGHTS.ToString());
+                destinationKeys.AddRange(weights.Select(d=>d.ToString(CultureInfo.InvariantCulture)));
+            }
+            return ExecuteInt64(RedisMessage.Create(db, RedisLiteral.ZUNIONSTORE, destination, destinationKeys.ToArray()), queueJump);
         }
 
     }
