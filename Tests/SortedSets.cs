@@ -28,7 +28,7 @@ namespace Tests
                 const double value = 634614442154715;
                 conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
-                var range = conn.SortedSets.Range(3, "zset", 1, null);
+                var range = conn.SortedSets.Range(3, "zset", 1, double.PositiveInfinity);
 
                 Assert.AreEqual(value, conn.Wait(range).Single().Value);
             }
@@ -41,7 +41,7 @@ namespace Tests
                 const double value = 634614442154715;
                 conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
-                var range = conn.SortedSets.Range(3, "zset", value+1, null);
+                var range = conn.SortedSets.Range(3, "zset", value+1, double.PositiveInfinity);
 
                 Assert.IsFalse(conn.Wait(range).Any());
             }
@@ -54,7 +54,7 @@ namespace Tests
                 const double value = 634614442154715;
                 conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
-                var range = conn.SortedSets.Range(3, "zset", null, value+1);
+                var range = conn.SortedSets.Range(3, "zset", double.NegativeInfinity, value+1);
 
                 Assert.AreEqual(value, conn.Wait(range).Single().Value);
             }
@@ -67,7 +67,7 @@ namespace Tests
                 const double value = 634614442154715;
                 conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
-                var range = conn.SortedSets.Range(3, "zset", null, value - 1);
+                var range = conn.SortedSets.Range(3, "zset", double.NegativeInfinity, value - 1);
 
                 Assert.IsFalse(conn.Wait(range).Any());
             }
