@@ -92,7 +92,7 @@ namespace BookSleeve
         /// <remarks>http://redis.io/commands/zrange</remarks>
         /// <remarks>http://redis.io/commands/zrevrange</remarks>
         /// <returns>list of elements in the specified range (optionally with their scores).</returns>
-        Task<KeyValuePair<string, double>[]> RangeString(int db, string key, long start, long stop, bool ascending = true, bool queueJump = false);
+        Task<Dictionary<string, double>> RangeString(int db, string key, long start, long stop, bool ascending = true, bool queueJump = false);
 
         /// <summary>
         /// Returns all the elements in the sorted set at key with a score between min and max (including elements with score equal to min or max). The elements are considered to be ordered from low to high scores.
@@ -102,9 +102,12 @@ namespace BookSleeve
         /// <remarks>http://redis.io/commands/zrangebyscore</remarks>
         /// <remarks>http://redis.io/commands/zrevrangebyscore</remarks>
         /// <returns>list of elements in the specified score range (optionally with their scores).</returns>
-        Task<KeyValuePair<byte[], double>[]> Range(int db, string key, double min, double max, bool ascending = true,
+        Task<KeyValuePair<byte[], double>[]> Range(int db, string key, double? min, double? max, bool ascending = true,
                                                    bool minInclusive = true, bool maxInclusive = true,
                                                    long offset = 0, long count = long.MaxValue, bool queueJump = false);
+
+        
+        Task<string[]> RangeStringWithoutScores(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump);
 
         /// <summary>
         /// Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
@@ -178,6 +181,9 @@ namespace BookSleeve
 
         Task<long> ZIntersectAndStore(int db, string destination, string[] keys, bool queueJump = false);        
         Task<long> ZUnionAndStore(int db, string destination, string[] keys, bool queueJump = false);
+        Task<byte[][]> RangeWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump);
+        Task<Dictionary<string, double>> RangeString(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump);
+        Task<string[]> RangeStringWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump);
     }
 
     partial class RedisConnection : ISortedSetCommands
@@ -313,17 +319,57 @@ namespace BookSleeve
             
             return ExecutePairs(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGE : RedisLiteral.ZREVRANGE, key, start, stop, RedisLiteral.WITHSCORES), queueJump);
         }
-
-        Task<KeyValuePair<string, double>[]> ISortedSetCommands.RangeString(int db, string key, long start, long stop, bool ascending, bool queueJump)
+        Task<byte[][]> ISortedSetCommands.RangeWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump)
         {
-            throw new NotImplementedException();
+
+            return ExecuteMultiBytes(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGE : RedisLiteral.ZREVRANGE, key, start, stop), queueJump);
         }
 
-        Task<KeyValuePair<byte[], double>[]> ISortedSetCommands.Range(int db, string key, double min, double max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump)
+        Task<Dictionary<string, double>> ISortedSetCommands.RangeString(int db, string key, long start, long stop, bool ascending, bool queueJump)
         {
-            
+            return ExecuteStringDoublePairs(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGE : RedisLiteral.ZREVRANGE, key,
+                start, stop,RedisLiteral.WITHSCORES), queueJump);
+        }
+        Task<string[]> ISortedSetCommands.RangeStringWithoutScores(int db, string key, long start, long stop, bool ascending, bool queueJump)
+        {
+            return ExecuteMultiString(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGE : RedisLiteral.ZREVRANGE, key,
+                start, stop), queueJump);
+        }
+        Task<KeyValuePair<byte[], double>[]> ISortedSetCommands.Range(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump)
+        {
+            var minParam = min.HasValue
+                               ? RedisMessage.RedisParameter.Range(min.Value, minInclusive)
+                               : RedisConstant.NegativeInfinity;
+            var maxParam = max.HasValue
+                               ? RedisMessage.RedisParameter.Range(max.Value, maxInclusive)
+                               : RedisConstant.PositiveInfinity;
+
             return ExecutePairs(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGEBYSCORE : RedisLiteral.ZREVRANGEBYSCORE, key,
-                RedisMessage.RedisParameter.Range(min, minInclusive), RedisMessage.RedisParameter.Range(max, maxInclusive), RedisLiteral.WITHSCORES), queueJump);
+                minParam, maxParam, RedisLiteral.WITHSCORES), queueJump);
+        }
+        Task<Dictionary<string, double>> ISortedSetCommands.RangeString(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump)
+        {
+            var minParam = min.HasValue
+                               ? RedisMessage.RedisParameter.Range(min.Value, minInclusive)
+                               : RedisConstant.NegativeInfinity;
+            var maxParam = max.HasValue
+                               ? RedisMessage.RedisParameter.Range(max.Value, maxInclusive)
+                               : RedisConstant.PositiveInfinity;
+
+            return ExecuteStringDoublePairs(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGEBYSCORE : RedisLiteral.ZREVRANGEBYSCORE, key,
+                minParam, maxParam, RedisLiteral.WITHSCORES), queueJump);
+        }
+        Task<string[]> ISortedSetCommands.RangeStringWithoutScores(int db, string key, double? min, double? max, bool ascending, bool minInclusive, bool maxInclusive, long offset, long count, bool queueJump)
+        {
+            var minParam = min.HasValue
+                               ? RedisMessage.RedisParameter.Range(min.Value, minInclusive)
+                               : RedisConstant.NegativeInfinity;
+            var maxParam = max.HasValue
+                               ? RedisMessage.RedisParameter.Range(max.Value, maxInclusive)
+                               : RedisConstant.PositiveInfinity;
+
+            return ExecuteMultiString(RedisMessage.Create(db, ascending ? RedisLiteral.ZRANGEBYSCORE : RedisLiteral.ZREVRANGEBYSCORE, key,
+                minParam, maxParam), queueJump);
         }
         /// <summary>
         /// See SortedSets.GetRange

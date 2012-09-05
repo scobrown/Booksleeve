@@ -842,10 +842,16 @@ namespace BookSleeve
             EnqueueMessage(message, queueJump);
             return msgResult.Task;
         }
-
         internal Task<KeyValuePair<byte[], double>[]> ExecutePairs(RedisMessage message, bool queueJump)
         {
             var msgResult = new MessageResultPairs();
+            message.SetMessageResult(msgResult);
+            EnqueueMessage(message, queueJump);
+            return msgResult.Task;
+        }
+        internal Task<Dictionary<string, double>> ExecuteStringDoublePairs(RedisMessage message, bool queueJump)
+        {
+            var msgResult = new MessageResultStringDoublePairs();
             message.SetMessageResult(msgResult);
             EnqueueMessage(message, queueJump);
             return msgResult.Task;
