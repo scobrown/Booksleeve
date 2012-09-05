@@ -734,6 +734,11 @@ namespace BookSleeve
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
     sealed internal class DbFreeAttribute : Attribute{}
 
+    static class RedisConstant
+    {
+        public const string PositiveInfinity = "+inf";
+        public const string NegativeInfinity = "-inf";
+    }
     enum RedisLiteral
     {
         None = 0,

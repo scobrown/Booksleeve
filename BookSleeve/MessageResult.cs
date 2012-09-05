@@ -86,6 +86,10 @@ namespace BookSleeve
     {
         protected override Dictionary<string, string> GetValue(RedisResult result) { return result.ExtractStringPairs(); }
     }
+    internal sealed class MessageResultStringDoublePairs : MessageResult<Dictionary<string, double>>
+    {
+        protected override Dictionary<string, double> GetValue(RedisResult result) { return result.ExtractStringDoublePairs(); }
+    }
     internal sealed class MessageResultVoid : MessageResult<bool>
     {
         public new Task Task { get { return base.Task; } }

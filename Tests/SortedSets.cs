@@ -13,10 +13,63 @@ namespace Tests
             using(var conn = Config.GetUnsecuredConnection())
             {
                 const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
                 var range = conn.SortedSets.Range(3, "zset", 0, -1);
 
                 Assert.AreEqual(value, conn.Wait(range).Single().Value);
+            }
+        }
+        [Test]
+        public void RangeWithInfiniteMax() 
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var range = conn.SortedSets.Range(3, "zset", 1, null);
+
+                Assert.AreEqual(value, conn.Wait(range).Single().Value);
+            }
+        }
+        [Test]
+        public void RangeWithInfiniteMaxShouldExcludeValues()
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var range = conn.SortedSets.Range(3, "zset", value+1, null);
+
+                Assert.IsFalse(conn.Wait(range).Any());
+            }
+        }
+        [Test]
+        public void RangeWithInfiniteMin()
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var range = conn.SortedSets.Range(3, "zset", null, value+1);
+
+                Assert.AreEqual(value, conn.Wait(range).Single().Value);
+            }
+        }
+        [Test]
+        public void RangeWithInfiniteMinShouldExcludeValues()
+        {
+            using (var conn = Config.GetUnsecuredConnection())
+            {
+                const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
+                conn.SortedSets.Add(3, "zset", "abc", value);
+                var range = conn.SortedSets.Range(3, "zset", null, value - 1);
+
+                Assert.IsFalse(conn.Wait(range).Any());
             }
         }
 
@@ -26,6 +79,7 @@ namespace Tests
             using (var conn = Config.GetUnsecuredConnection())
             {
                 const double value = 634614442154715;
+                conn.Keys.Remove(3, "zset");
                 conn.SortedSets.Add(3, "zset", "abc", value);
                 var score = conn.SortedSets.Score(3, "zset","abc");
                 Assert.AreEqual(value, conn.Wait(score));
